@@ -1,5 +1,6 @@
 package com.example.config;
 
+import com.example.service.CustomOAuth2UserService;
 import com.example.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,16 +14,23 @@ import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.web.access.AccessDeniedHandlerImpl;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.session.FindByIndexNameSessionRepository;
 import org.springframework.session.security.SpringSessionBackedSessionRegistry;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.LinkedHashMap;
 
 @Configuration
 @EnableWebSecurity
@@ -31,6 +39,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
     private final FindByIndexNameSessionRepository sessionRepository;
+    private final CustomOAuth2UserService customOAuth2UserService;
+
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         /*auth.inMemoryAuthentication()
@@ -70,9 +80,23 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 // .accessDeniedPage("/access_denied")
                 .accessDeniedHandler(customAccessDeniedHandler)
 
-        ;
+                .and()
+                .oauth2Login()
+                .userInfoEndpoint()
+                .userService(customOAuth2UserService);
+    }
+
+    public class MyOAuth2SuccessHandler implements AuthenticationSuccessHandler {
+
+        @Override
+        public void onAuthenticationSuccess(HttpServletRequest req, HttpServletResponse res, Authentication authentication) {
+            String id = authentication.getName();
+
+            LinkedHashMap<String, Object> properties = (LinkedHashMap<String, Object>) ((DefaultOAuth2User)authentication.getPrincipal()).getAttributes().get("properties");
+            String name = (String) properties.get("nickname");
 
 
+        }
     }
 
     @Bean

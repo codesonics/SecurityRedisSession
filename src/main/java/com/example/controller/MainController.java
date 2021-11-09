@@ -11,7 +11,14 @@ public class MainController {
 
     @GetMapping(value = "/")
     public String home() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication(); // Authentication 을 반환
+        System.out.println(authentication.getPrincipal());
         return "index";
+    }
+
+    @GetMapping(value = "/loginSuccess")
+    public String loginSuccess() {
+        return "private";
     }
 
     @GetMapping(value = "/private")
